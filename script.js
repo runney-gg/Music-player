@@ -111,7 +111,7 @@ function createYTVideo(videoId) {
 
     ytPlayer = new YT.Player("yt-player", {
         height: "1", width: "1", videoId,
-        playerVars: { autoplay: 1, controls: 0, rel: 0 },
+        playerVars: { autoplay: 1, controls: 0, rel: 0, origin: window.location.origin, iv_load_policy: 3, modestbranding: 1 },
         events: { onReady: onYTReady, onStateChange: onYTStateChange, onError: onYTError }
     });
 }
