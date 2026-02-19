@@ -492,3 +492,41 @@ function fmt(s = 0) {
 document.getElementById("songURL").addEventListener("keydown", e => {
     if (e.key === "Enter") loadAndPlay();
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Keyboard shortcuts
+// ─────────────────────────────────────────────────────────────────────────────
+document.addEventListener("keydown", (e) => {
+    // Ignore if user is typing in the URL input
+    if (document.activeElement === document.getElementById("songURL")) return;
+
+    switch(e.code) {
+        case "Space":
+            e.preventDefault(); // stop page from scrolling
+            togglePlayPause();
+            break;
+        case "ArrowRight":
+            e.preventDefault();
+            nextTrack();
+            break;
+        case "ArrowLeft":
+            e.preventDefault();
+            prevTrack();
+            break;
+        case "ArrowUp":
+            e.preventDefault();
+            volumeVal = Math.min(1, volumeVal + 0.1);
+            document.getElementById("volumeRange").value = volumeVal;
+            setVolume(volumeVal);
+            break;
+        case "ArrowDown":
+            e.preventDefault();
+            volumeVal = Math.max(0, volumeVal - 0.1);
+            document.getElementById("volumeRange").value = volumeVal;
+            setVolume(volumeVal);
+            break;
+        case "KeyM":
+            toggleMute();
+            break;
+    }
+});
