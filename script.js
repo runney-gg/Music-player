@@ -44,6 +44,8 @@ document.getElementById("copy-year").textContent = new Date().getFullYear();
 document.addEventListener("click", function(e) {
     const btn = e.target.closest("button");
     if (!btn) return;
+    // Blur button after click so spacebar doesn't re-trigger it
+    btn.blur();
     const ripple = document.createElement("span");
     const rect   = btn.getBoundingClientRect();
     const size   = Math.max(rect.width, rect.height);
@@ -294,6 +296,8 @@ async function loadAndPlay() {
 // Controls
 // ─────────────────────────────────────────────────────────────────────────────
 function togglePlayPause() {
+    // Blur any focused button so space key doesn't double-trigger
+    if (document.activeElement) document.activeElement.blur();
     if (isYouTube) {
         if (!ytPlayer) return;
         isPlaying ? ytPlayer.pauseVideo() : ytPlayer.playVideo();
