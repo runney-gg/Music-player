@@ -147,10 +147,19 @@ function createYTPlaylist(playlistId) {
 // YT player event handlers
 // ─────────────────────────────────────────────────────────────────────────────
 function onYTReady(e) {
-    e.target.setVolume(volumeVal * 100);
-    if (isMuted) e.target.mute();
-    if (isShuffle && isPlaylist) e.target.setShuffle(true);
-    e.target.playVideo();
+    try {
+        const target = e && e.target ? e.target : ytPlayer;
+        target.setVolume(volumeVal * 100);
+        if (isMuted) target.mute();
+        if (isShuffle && isPlaylist) target.setShuffle(true);
+        target.playVideo();
+    } catch(err) {
+        if (ytPlayer) {
+            ytPlayer.setVolume(volumeVal * 100);
+            if (isMuted) ytPlayer.mute();
+            ytPlayer.playVideo();
+        }
+    }
 }
 
 function onYTStateChange(e) {
