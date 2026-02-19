@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="google-site-verification" content="dntlu0yaj4-uG_182mSUJ6hixLx4j9vpfcBCWxz7uls" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- ── SEO Meta Tags ── -->
@@ -89,7 +88,7 @@
     <div class="playlist-bar" id="playlistBar">
         <span class="playlist-label">&#128203; Playlist</span>
         <span id="trackCounter" class="track-counter">— / —</span>
-        <button class="ctrl-btn shuffle-btn" id="shuffleBtn" onclick="toggleShuffle()" title="Shuffle">
+        <button tabindex="-1" class="ctrl-btn shuffle-btn" id="shuffleBtn" onclick="toggleShuffle()" title="Shuffle">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
         </button>
     </div>
@@ -104,20 +103,20 @@
     </div>
 
     <div class="controls">
-        <button class="ctrl-btn" id="muteBtn" onclick="toggleMute()" title="Mute">
+        <button tabindex="-1" class="ctrl-btn" id="muteBtn" onclick="toggleMute()" title="Mute">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
         </button>
-        <button class="ctrl-btn" id="prevBtn" onclick="prevTrack()" title="Previous / Rewind 10s">
+        <button tabindex="-1" class="ctrl-btn" id="prevBtn" onclick="prevTrack()" title="Previous / Rewind 10s">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/><text x="7" y="16" font-size="6" fill="currentColor" stroke="none">10</text></svg>
         </button>
-        <button class="play-btn" id="playPauseBtn" onclick="togglePlayPause()">
+        <button tabindex="-1" class="play-btn" id="playPauseBtn" onclick="togglePlayPause()">
             <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             <svg id="pauseIcon" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
         </button>
-        <button class="ctrl-btn" id="nextBtn" onclick="nextTrack()" title="Next / Forward 10s">
+        <button tabindex="-1" class="ctrl-btn" id="nextBtn" onclick="nextTrack()" title="Next / Forward 10s">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-3.51"/><text x="7" y="16" font-size="6" fill="currentColor" stroke="none">10</text></svg>
         </button>
-        <button class="ctrl-btn" onclick="restartSong()" title="Restart">
+        <button tabindex="-1" class="ctrl-btn" onclick="restartSong()" title="Restart">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
         </button>
     </div>
@@ -130,7 +129,7 @@
 
     <div class="url-row">
         <input type="text" id="songURL" placeholder="YouTube video, playlist, or MP3 URL...">
-        <button class="load-btn" id="loadBtn" onclick="loadAndPlay()">
+        <button tabindex="-1" class="load-btn" id="loadBtn" onclick="loadAndPlay()">
             <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             Play
         </button>

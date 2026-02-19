@@ -500,37 +500,32 @@ document.getElementById("songURL").addEventListener("keydown", e => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Keyboard shortcuts
 // ─────────────────────────────────────────────────────────────────────────────
-document.addEventListener("keydown", (e) => {
-    // Ignore if user is typing in the URL input
-    if (document.activeElement === document.getElementById("songURL")) return;
+window.addEventListener("keydown", (e) => {
+    const tag = document.activeElement.tagName.toLowerCase();
+    // Ignore if user is typing in any input or button is focused
+    if (tag === "input" || tag === "textarea") return;
 
-    switch(e.code) {
-        case "Space":
-            e.preventDefault(); // stop page from scrolling
-            togglePlayPause();
-            break;
-        case "ArrowRight":
-            e.preventDefault();
-            nextTrack();
-            break;
-        case "ArrowLeft":
-            e.preventDefault();
-            prevTrack();
-            break;
-        case "ArrowUp":
-            e.preventDefault();
-            volumeVal = Math.min(1, volumeVal + 0.1);
-            document.getElementById("volumeRange").value = volumeVal;
-            setVolume(volumeVal);
-            break;
-        case "ArrowDown":
-            e.preventDefault();
-            volumeVal = Math.max(0, volumeVal - 0.1);
-            document.getElementById("volumeRange").value = volumeVal;
-            setVolume(volumeVal);
-            break;
-        case "KeyM":
-            toggleMute();
-            break;
+    if (e.key === " " || e.code === "Space") {
+        e.preventDefault();
+        e.stopPropagation();
+        togglePlayPause();
+        return;
     }
+    if (e.key === "ArrowRight") { e.preventDefault(); nextTrack(); return; }
+    if (e.key === "ArrowLeft")  { e.preventDefault(); prevTrack(); return; }
+    if (e.key === "ArrowUp")    {
+        e.preventDefault();
+        volumeVal = Math.min(1, volumeVal + 0.1);
+        document.getElementById("volumeRange").value = volumeVal;
+        setVolume(volumeVal);
+        return;
+    }
+    if (e.key === "ArrowDown")  {
+        e.preventDefault();
+        volumeVal = Math.max(0, volumeVal - 0.1);
+        document.getElementById("volumeRange").value = volumeVal;
+        setVolume(volumeVal);
+        return;
+    }
+    if (e.key === "m" || e.key === "M") { toggleMute(); return; }
 });
