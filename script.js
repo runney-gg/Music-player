@@ -10,7 +10,7 @@ let ytReady        = false;
 let ytInterval     = null;
 let volumeVal      = 0.7;
 let isMuted        = false;
-let pendingLoad    = null; // { type: 'video'|'playlist', id }
+let pendingLoad    = null;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DOM refs
@@ -57,14 +57,38 @@ document.addEventListener("click", function(e) {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// YouTube IFrame API callback (called automatically by YouTube script)
+// YouTube IFrame API — called automatically by YouTube script when ready
 // ─────────────────────────────────────────────────────────────────────────────
 function onYouTubeIframeAPIReady() {
     ytReady = true;
+    hideStatus();
     if (pendingLoad) {
         const p = pendingLoad;
         pendingLoad = null;
         p.type === "playlist" ? createYTPlaylist(p.id) : createYTVideo(p.id);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wait for API helper — polls until ready then runs callback
+// ─────────────────────────────────────────────────────────────────────────────
+function waitForYTReady(callback) {
+    if (ytReady) {
+        callback();
+    } else {
+        showStatus("Loading YouTube API...", "info");
+        const poll = setInterval(() => {
+            if (ytReady) {
+                clearInterval(poll);
+                hideStatus();
+                callback();
+            }
+        }, 100);
+        // Timeout after 10 seconds
+        setTimeout(() => {
+            clearInterval(poll);
+            if (!ytReady) showStatus("❌ YouTube API failed to load. Try refreshing the page.", "error");
+        }, 10000);
     }
 }
 
@@ -76,8 +100,17 @@ function createYTVideo(videoId) {
     isPlaylist = false;
     showPlaylistBar(false);
 
+    // yt-player must be visible for YT API to work
+    const ytDiv = document.getElementById("yt-player");
+    ytDiv.style.display = "block";
+    ytDiv.style.position = "absolute";
+    ytDiv.style.opacity = "0";
+    ytDiv.style.pointerEvents = "none";
+    ytDiv.style.width = "1px";
+    ytDiv.style.height = "1px";
+
     ytPlayer = new YT.Player("yt-player", {
-        height: "0", width: "0", videoId,
+        height: "1", width: "1", videoId,
         playerVars: { autoplay: 1, controls: 0, rel: 0 },
         events: { onReady: onYTReady, onStateChange: onYTStateChange, onError: onYTError }
     });
@@ -91,13 +124,20 @@ function createYTPlaylist(playlistId) {
     isPlaylist = true;
     showPlaylistBar(true);
 
+    const ytDiv = document.getElementById("yt-player");
+    ytDiv.style.display = "block";
+    ytDiv.style.position = "absolute";
+    ytDiv.style.opacity = "0";
+    ytDiv.style.pointerEvents = "none";
+    ytDiv.style.width = "1px";
+    ytDiv.style.height = "1px";
+
     ytPlayer = new YT.Player("yt-player", {
-        height: "0", width: "0",
+        height: "1", width: "1",
         playerVars: {
             autoplay: 1, controls: 0, rel: 0,
             listType: "playlist",
             list: playlistId,
-            shuffle: isShuffle ? 1 : 0
         },
         events: { onReady: onYTReady, onStateChange: onYTStateChange, onError: onYTError }
     });
@@ -125,12 +165,10 @@ function onYTStateChange(e) {
             setPlayingState(false);
             clearInterval(ytInterval);
         }
-        // playlist auto-advances via YT itself
     }
 }
 
 function onYTError(e) {
-    // Error 150 = video blocked for embedding, skip to next in playlist
     if (isPlaylist && (e.data === 150 || e.data === 101)) {
         showStatus("Skipping blocked video...", "info");
         setTimeout(() => { ytPlayer.nextVideo(); hideStatus(); }, 1200);
@@ -158,19 +196,16 @@ function startYTProgressLoop() {
 // ─────────────────────────────────────────────────────────────────────────────
 function updatePlaylistInfo() {
     try {
-        const idx        = ytPlayer.getPlaylistIndex();   // 0-based
-        const list       = ytPlayer.getPlaylist();
-        const total      = list ? list.length : "?";
-        const currentId  = list ? list[idx] : null;
-
+        const idx       = ytPlayer.getPlaylistIndex();
+        const list      = ytPlayer.getPlaylist();
+        const total     = list ? list.length : "?";
+        const currentId = list ? list[idx] : null;
         trackCounter.textContent = `${idx + 1} / ${total}`;
-
         if (currentId) {
             thumbnail.src = `https://img.youtube.com/vi/${currentId}/maxresdefault.jpg`;
             thumbnail.onerror = () => {
                 thumbnail.src = `https://img.youtube.com/vi/${currentId}/hqdefault.jpg`;
             };
-            // Fetch title via oEmbed
             fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${currentId}&format=json`)
                 .then(r => r.json())
                 .then(d => {
@@ -203,15 +238,8 @@ async function loadAndPlay() {
         songTitleEl.textContent  = "Loading playlist...";
         songSubtitle.textContent = "YouTube Playlist";
         thumbnail.src = "https://placehold.co/220x220/0f0f0f/333?text=%F0%9F%8E%B5";
-        hideStatus();
         setLoadBtnState(false);
-
-        if (ytReady) {
-            createYTPlaylist(playlistId);
-        } else {
-            pendingLoad = { type: "playlist", id: playlistId };
-            showStatus("Waiting for YouTube API...", "info");
-        }
+        waitForYTReady(() => createYTPlaylist(playlistId));
         return;
     }
 
@@ -234,15 +262,8 @@ async function loadAndPlay() {
             songSubtitle.textContent = "YouTube";
         }
 
-        hideStatus();
         setLoadBtnState(false);
-
-        if (ytReady) {
-            createYTVideo(videoId);
-        } else {
-            pendingLoad = { type: "video", id: videoId };
-            showStatus("Waiting for YouTube API...", "info");
-        }
+        waitForYTReady(() => createYTVideo(videoId));
         return;
     }
 
@@ -273,7 +294,6 @@ function togglePlayPause() {
     }
 }
 
-// Prev: playlist → previous track | single/MP3 → rewind 10s
 function prevTrack() {
     if (isPlaylist && ytPlayer) {
         ytPlayer.previousVideo();
@@ -283,7 +303,6 @@ function prevTrack() {
     }
 }
 
-// Next: playlist → next track | single/MP3 → forward 10s
 function nextTrack() {
     if (isPlaylist && ytPlayer) {
         ytPlayer.nextVideo();
@@ -373,7 +392,6 @@ function updateProgress(pct, current, total) {
 
 function showPlaylistBar(show) {
     playlistBar.classList.toggle("visible", show);
-    // swap prev/next icons to skip-track icons when in playlist mode
     const prevSvg = prevBtn.querySelector("svg");
     const nextSvg = nextBtn.querySelector("svg");
     if (show) {
@@ -401,8 +419,17 @@ function resetPlayer() {
 }
 
 function destroyYT() {
-    if (ytPlayer) { try { ytPlayer.destroy(); } catch(_) {} ytPlayer = null; }
+    if (ytPlayer) {
+        try { ytPlayer.destroy(); } catch(_) {}
+        ytPlayer = null;
+    }
     clearInterval(ytInterval);
+    // Reset yt-player div
+    const ytDiv = document.getElementById("yt-player");
+    if (ytDiv) {
+        ytDiv.style.display = "none";
+        ytDiv.innerHTML = "";
+    }
 }
 
 function setLoadBtnState(loading) {
@@ -420,14 +447,10 @@ function hideStatus() { statusPill.className = "status-pill hidden"; }
 // ─────────────────────────────────────────────────────────────────────────────
 // URL parsers
 // ─────────────────────────────────────────────────────────────────────────────
-
-// Extract playlist ID — must come BEFORE video ID check
-// Handles: ?list=PLxxx  and  /playlist?list=PLxxx
 function extractYouTubePlaylistId(url) {
     try {
         const u  = new URL(url);
         const pl = u.searchParams.get("list");
-        // Only treat as playlist if there's no video ID, OR the path is /playlist
         if (pl && (u.pathname === "/playlist" || !u.searchParams.get("v"))) {
             return pl;
         }
@@ -435,12 +458,11 @@ function extractYouTubePlaylistId(url) {
     return null;
 }
 
-// Extract single video ID
 function extractYouTubeVideoId(url) {
     try {
         const u = new URL(url);
         if (u.hostname.includes("youtube.com")) return u.searchParams.get("v");
-        if (u.hostname === "youtu.be")           return u.pathname.slice(1).split("?")[0];
+        if (u.hostname === "youtu.be") return u.pathname.slice(1).split("?")[0];
     } catch {}
     return null;
 }
