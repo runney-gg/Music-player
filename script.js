@@ -222,6 +222,7 @@ function updatePlaylistInfo() {
                 .then(d => {
                     songTitleEl.textContent  = d.title       || "YouTube Track";
                     songSubtitle.textContent = d.author_name || "YouTube Playlist";
+                    updateMediaSession();
                 })
                 .catch(() => {
                     songTitleEl.textContent  = "YouTube Track";
@@ -300,10 +301,22 @@ function togglePlayPause() {
     if (document.activeElement) document.activeElement.blur();
     if (isYouTube) {
         if (!ytPlayer) return;
-        isPlaying ? ytPlayer.pauseVideo() : ytPlayer.playVideo();
+        if (isPlaying) {
+            ytPlayer.pauseVideo();
+            releaseWakeLock();
+        } else {
+            ytPlayer.playVideo();
+            requestWakeLock();
+        }
     } else {
         if (!audio.src) return;
-        isPlaying ? audio.pause() : audio.play();
+        if (isPlaying) {
+            audio.pause();
+            releaseWakeLock();
+        } else {
+            audio.play();
+            requestWakeLock();
+        }
     }
 }
 
@@ -390,11 +403,81 @@ function setPlayingState(playing) {
     if (playing) {
         spinningOverlay.classList.add("spinning");
         thumbnail.style.boxShadow = "0 0 50px rgba(20,200,160,0.4), 0 0 80px rgba(124,92,252,0.25)";
+        updateMediaSession();
+        if ("mediaSession" in navigator) {
+            navigator.mediaSession.playbackState = "playing";
+        }
     } else {
         spinningOverlay.classList.remove("spinning");
         thumbnail.style.boxShadow = "";
+        if ("mediaSession" in navigator) {
+            navigator.mediaSession.playbackState = "paused";
+        }
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Media Session API — lock screen + notification controls
+// ─────────────────────────────────────────────────────────────────────────────
+function updateMediaSession() {
+    if (!("mediaSession" in navigator)) return;
+
+    const title  = songTitleEl.textContent  || "INIAHMAAM";
+    const artist = songSubtitle.textContent || "INIAHMAAM Music Player";
+    const thumb  = thumbnail.src || "";
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+        title:   title,
+        artist:  artist,
+        album:   "INIAHMAAM",
+        artwork: [
+            { src: thumb, sizes: "512x512", type: "image/jpeg" },
+            { src: thumb, sizes: "256x256", type: "image/jpeg" },
+        ]
+    });
+
+    navigator.mediaSession.setActionHandler("play", () => {
+        togglePlayPause();
+    });
+    navigator.mediaSession.setActionHandler("pause", () => {
+        togglePlayPause();
+    });
+    navigator.mediaSession.setActionHandler("previoustrack", () => {
+        prevTrack();
+    });
+    navigator.mediaSession.setActionHandler("nexttrack", () => {
+        nextTrack();
+    });
+    navigator.mediaSession.setActionHandler("seekbackward", () => {
+        seekBy(-10);
+    });
+    navigator.mediaSession.setActionHandler("seekforward", () => {
+        seekBy(10);
+    });
+}
+
+// Keep screen awake on mobile using Wake Lock API (where supported)
+let wakeLock = null;
+async function requestWakeLock() {
+    try {
+        if ("wakeLock" in navigator) {
+            wakeLock = await navigator.wakeLock.request("screen");
+        }
+    } catch (_) {}
+}
+
+async function releaseWakeLock() {
+    try {
+        if (wakeLock) { await wakeLock.release(); wakeLock = null; }
+    } catch (_) {}
+}
+
+// Re-acquire wake lock if page becomes visible again
+document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState === "visible" && isPlaying) {
+        await requestWakeLock();
+    }
+});
 
 function updateProgress(pct, current, total) {
     progressBar.value         = pct;
