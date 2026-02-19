@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://runney-gg.github.io/iniahmaam/sitemap.xml
